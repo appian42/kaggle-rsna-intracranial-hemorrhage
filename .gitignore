@@ -1,0 +1,6 @@
+__pycache__/
+cache
+data
+input
+model
+*.py[cod]
