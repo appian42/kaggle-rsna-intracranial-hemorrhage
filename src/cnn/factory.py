@@ -10,7 +10,7 @@ from albumentations.pytorch import ToTensor
 import pretrainedmodels
 
 from .dataset.custom_dataset import CustomDataset
-from .transforms.transforms import RandomResizedCrop
+from .transforms.transforms import RandomResizedCrop, RandomDicomNoise
 from .utils.logger import log
 
 
@@ -43,9 +43,15 @@ def get_model(cfg):
     log(f'model: {cfg.model.name}')
     log(f'pretrained: {cfg.model.pretrained}')
 
-    if cfg.model.name in ['resnext101_32x8d_wsl']:
+    if cfg.model.name.endswith('_wsl'):
         model = torch.hub.load('facebookresearch/WSL-Images', cfg.model.name)
         model.fc = torch.nn.Linear(2048, cfg.model.n_output)
+        return model
+    elif cfg.model.name.startswith('efficientnet'):
+        from efficientnet_pytorch import EfficientNet
+        model = EfficientNet.from_pretrained(cfg.model.name, num_classes=cfg.model.n_output)
+        #model.set_swish(memory_efficient=False)
+        #model._fc = torch.nn.Linear(1280, cfg.model.n_output)
         return model
 
     try:

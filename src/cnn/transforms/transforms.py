@@ -46,3 +46,21 @@ class RandomResizedCrop(ImageOnlyTransform):
         y_min = random.randint(0, height - min_side)
         return resized_crop(image, self.height, self.width, x_min, y_min, x_min+min_side, y_min+min_side)
 
+
+class RandomDicomNoise(ImageOnlyTransform):
+    
+    def __init__(self, limit=None, limit_ratio=None, always_apply=False, p=0.5):
+        assert limit or limit_ratio
+        super().__init__(always_apply, p)
+        self.limit = limit
+        self.limit_ratio = limit_ratio
+
+    def apply(self, image, **params):
+        if self.limit:
+            value = random.uniform(-self.limit, self.limit)
+            image += value
+        else:
+            ratio = random.uniform(1.0-self.limit_ratio, 1.0+self.limit_ratio)
+            image *= ratio
+
+        return image

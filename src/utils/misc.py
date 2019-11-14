@@ -19,8 +19,16 @@ def get_dicom_raw(dicom):
     return {attr:cast(getattr(dicom,attr)) for attr in dir(dicom) if attr[0].isupper() and attr not in ['PixelData']}
 
 
-def rescale_image(image, slope, intercept):
-    return image * slope + intercept
+def rescale_image(image, slope, intercept, bits, pixel):
+    # In some cases intercept value is wrong and can be fixed
+    # Ref. https://www.kaggle.com/jhoward/cleaning-the-data-for-rapid-prototyping-fastai
+    if bits == 12 and pixel == 0 and intercept > -100:
+        image = image.copy() + 1000
+        px_mode = 4096
+        image[image>=px_mode] = image[image>=px_mode] - px_mode
+        intercept = -1000
+
+    return image.astype(np.float32) * slope + intercept
 
 
 def apply_window(image, center, width):
@@ -32,13 +40,7 @@ def apply_window(image, center, width):
     return image
 
 
-def get_dicom_meta(dicom):
-    return {
-        'PatientID': dicom.PatientID, # can be grouped (20-548)
-        'StudyInstanceUID': dicom.StudyInstanceUID, # can be grouped (20-60)
-        'SeriesInstanceUID': dicom.SeriesInstanceUID, # can be grouped (20-60)
-        'WindowWidth': get_dicom_value(dicom.WindowWidth),
-        'WindowCenter': get_dicom_value(dicom.WindowCenter),
-        'RescaleIntercept': float(dicom.RescaleIntercept),
-        'RescaleSlope': float(dicom.RescaleSlope), # all same (1.0)
-    }
+def get_windowed_ratio(image, center, width):
+    # get ratio of pixels within the window
+    windowed = apply_window(image, center, width)
+    return len(np.where((windowed > 0) & (windowed < 80))[0]) / windowed.size

@@ -1,74 +1,133 @@
 # RSNA Intracranial Hemorrhage Detection
 
-This is the project for [RSNA Intracranial Hemorrhage Detection](https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection) hosted on Kaggle in 2019.
+- This is the project for [RSNA Intracranial Hemorrhage Detection](https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection) hosted on Kaggle in 2019.
+- It finished at [12th place](https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection/leaderboard) in the competition.
 
 
-## Requirements
+## Table of Contents
+
+*   [Directory Layout](#directory-layout)
+*   [Solution Overview](#solution-overview)
+*   [How to Run](#how-to-run)
+    *   [Requirements](#requirements)
+    *   [Preprocessing](#preprocessing)
+    *   [Training](#training)
+    *   [Predicting](#predicting)
+    *   [Second Level Model](#second-level-model-how-to-run)
+    *   [Ensembling](#ensembling)
+*   [Download](#download)
+    *   [Trained Weights](#trained-weights)
+    *   [Predictions](#predictions)
+*   [License](#license)
+
+
+## Directory layout
+
+```
+.
+├── bin           # Scripts to perform various tasks such as `preprocess`, `train`.
+├── cache         # Where preprocessed outputs are saved.
+├── conf          # Configuration files for classification models.
+├── input         # Input files provided by kaggle. 
+├── model         # Where classification model outputs are saved.
+├── meta          # Where second level model outputs are saved.
+├── src           # 
+└── submission    # Where submission files are saved.
+```
+
+Missing directories will be created when `./bin/preprocess.sh` is run.
+
+
+## Solution Overview
+
+Will be posted on kaggle forum.
+
+
+## How to run
+
+Please put `./input` directory in the root level and unzip the downloaded file from [kaggle](https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection/data) there. The zipped file has to be the one provided for 2nd stage and the file size should be 180GB before unzipping.
+
+Please make sure you run each of the scripts from parent directory of `./bin`.
+
+
+### Requirements
+
+The library versions we used. It does not mean other versions can not be used but not tested.
 
 - Python 3.6.6
+- CUDA 10.0 (CUDA driver 410.79)
 - [Pytorch](https://pytorch.org/) 1.1.0
 - [NVIDIA apex](https://github.com/NVIDIA/apex) 0.1 (for mixed precision training)
 
 
-## Performance (Single model)
-
-| Backbone | Image size | LB |
-----|----|----
-| se\_resnext50\_32x4d | 512x512 | 0.070 - 0.072 |
-
-
-## Windowing
-
-For this challenge, windowing is important to focus on the matter, in this case the brain and the blood. There are good kernels explaining how windowing works.
-
-- [See like a Radiologist with Systematic Windowing](https://www.kaggle.com/dcstang/see-like-a-radiologist-with-systematic-windowing) by David Tang
-- [RSNA IH Detection - EDA](https://www.kaggle.com/allunia/rsna-ih-detection-eda) by Allunia
-
-We used three types of windows to focus and assigned them to each of the chennel to construct images on the fly for training.
-
-| Channel | Matter | Window Center | Window Width |
-----------|--------|---------------|---------------
-| 0 | Brain | 40 | 80 |
-| 1 | Blood/Subdural | 80 | 200 |
-| 2 | Soft tissues | 40 | 380 |
-
-
-## Preparation
-
-Please put `./input` directory in the root level and unzip the file downloaded from kaggle there. All other directories such as `./cache`, `./data`, `./model` will be created if needed when `./bin/preprocess.sh` is run.
-
-
-## Preprocessing
-
-Please make sure you run the script from parent directory of `./bin`.
+### Preprocessing
 
 ~~~
 $ sh ./bin/preprocess.sh
 ~~~
 
-[preprocess.sh](https://github.com/appian42/kaggle-rsna-intracranial-hemorrhage/blob/master/bin/preprocess.sh) does the following at once.
+[preprocess.sh](./bin/preprocess.sh) does the following at once.
 
-- [dicom_to_dataframe.py](https://github.com/appian42/kaggle-rsna-intracranial-hemorrhage/blob/master/src/preprocess/dicom_to_dataframe.py) reads dicom files and save its metadata into the dataframe. 
-- [create_dataset.py](https://github.com/appian42/kaggle-rsna-intracranial-hemorrhage/blob/master/src/preprocess/create_dataset.py) creates a dataset for training.
-- [make_folds.py](https://github.com/appian42/kaggle-rsna-intracranial-hemorrhage/blob/master/src/preprocess/make_folds.py) makes folds for cross validation. 
-
-
-## Training
-
-~~~
-$ sh ./bin/train001.sh
-~~~
-
-[train.001.sh](https://github.com/appian42/kaggle-rsna-intracranial-hemorrhage/blob/master/bin/train001.sh) uses se\_resnext50\_32x4d from [pretrained-models.pytorch](https://github.com/Cadene/pretrained-models.pytorch) for training. 
-One epoch probably takes 20,000 seconds to train with a single 1080ti.
+- Creates directories such as `./cache`, `./model` if needed.
+- [dicom_to_dataframe.py](./src/preprocess/dicom_to_dataframe.py) reads dicom files and save its metadata into the dataframe.
+- [create_dataset.py](./src/preprocess/create_dataset.py) creates a dataset for train/test.
+- [make_folds.py](./src/preprocess/make_folds.py) makes folds(n=8) for cross validation. 
 
 
-## Predicting
+### Training (classification model)
 
 ~~~
-$ sh ./bin/predict001.sh
+$ sh ./bin/train.sh
 ~~~
 
-[predict001.sh](https://github.com/appian42/kaggle-rsna-intracranial-hemorrhage/blob/master/bin/predict001.sh) does the predictions and makes a submission file for scoring on Kaggle. Please uncomment the last line if you want to automatically submit it to kaggle through API.
+- Trains two types of models `se_resnext50_32x4d` and `se_resnext101_32x4d` with 8 folds each. 
 
 
+### Predicting (classification model)
+
+~~~
+$ sh ./bin/predict.sh
+~~~
+
+- Makes predictions for validation data (out-of-fold predictions).
+- Makes predictions for test data.
+- Checkpoints from 2nd and 3rd epoch of each fold are used for predictions.
+
+
+### Second level model
+
+~~~
+$ sh ./bin/predict_meta.sh
+~~~
+
+- Ensembles out-of-fold predictions from the previous step (used as meta features to construct train data).
+- Ensembles test predictions from the previous step (used as meta features to construct test data).
+- Trains `LightGBM`, `Catboost` and `XGB` with 8 folds each.
+- Predicts on test data using each of the trained models.
+
+
+### Ensembling (+postprocessing)
+
+~~~
+$ sh ./bin/ensemble.sh
+~~~
+
+- Ensembles predictions from the previous step.
+- Makes a submission file.
+
+
+## Download
+
+
+### Trained Weights
+
+TBA
+
+### Predictions
+
+TBA
+
+
+## License
+
+The license is MIT. 

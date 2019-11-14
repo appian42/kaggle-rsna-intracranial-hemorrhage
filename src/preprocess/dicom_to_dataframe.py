@@ -19,12 +19,12 @@ def get_args():
     parser.add_argument('--input', help='provided by kaggle, stage_1_train.csv for stage1')
     parser.add_argument('--output')
     parser.add_argument('--imgdir')
-    parser.add_argument('--n-pool', default=4, type=int)
+    parser.add_argument('--n-pool', default=6, type=int)
     parser.add_argument('--nrows', default=None, type=int)
     return parser.parse_args()
 
 
-def group_id_by_label(df):
+def group_labels_by_id(df):
     ids = {}
     for row in tqdm(df.itertuples(), total=len(df)):
         prefix, id, label = row.ID.split('_')
@@ -68,10 +68,12 @@ def create_record(item, dirname):
     intercept = float(record['RescaleIntercept'])
     center = misc.get_dicom_value(record['WindowCenter'])
     width = misc.get_dicom_value(record['WindowWidth'])
+    bits= record['BitsStored']
+    pixel = record['PixelRepresentation']
 
-    image = misc.rescale_image(raw, slope, intercept)
+    image = misc.rescale_image(raw, slope, intercept, bits, pixel)
     doctor = misc.apply_window(image, center, width)
-    custom = misc.apply_window(image, 40, 80)
+    brain = misc.apply_window(image, 40, 80)
 
     record.update({
         'raw_max': raw.max(),
@@ -82,10 +84,11 @@ def create_record(item, dirname):
         'doctor_min': doctor.min(),
         'doctor_mean': doctor.mean(),
         'doctor_diff': doctor.max() - doctor.min(),
-        'custom_max': custom.max(),
-        'custom_min': custom.min(),
-        'custom_mean': custom.mean(),
-        'custom_diff': custom.max() - custom.min(),
+        'brain_max': brain.max(),
+        'brain_min': brain.min(),
+        'brain_mean': brain.mean(),
+        'brain_diff': brain.max() - brain.min(),
+        'brain_ratio': misc.get_windowed_ratio(image, 40, 80),
     })
     return record
 
@@ -109,7 +112,7 @@ def main():
     df_input = pd.read_csv(args.input, nrows=args.nrows)
     print('read %s (%d records)' % (args.input, len(df_input)))
 
-    ids = group_id_by_label(df_input)
+    ids = group_labels_by_id(df_input)
     ids = remove_corrupted_images(ids)
     
     df_output = create_df(ids, args)

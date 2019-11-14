@@ -15,7 +15,7 @@ def get_args():
     parser.add_argument('--input')
     parser.add_argument('--inputs', help='for ensembling. can be recursively nested for averaging.')
     parser.add_argument('--output', required=True)
-    parser.add_argument('--sample_submission', default='./input/stage_1_sample_submission.csv')
+    parser.add_argument('--sample_submission', default='./input/stage_2_sample_submission.csv')
     parser.add_argument('--clip', type=float, default=1e-6)
 
     args = parser.parse_args()
@@ -33,20 +33,22 @@ def avg_predictions(results):
     }
 
 
-def read_prediction(path):
+def read_prediction(path, dirname=''):
+    if dirname:
+        path = os.path.join(dirname, path)
     print('loading %s...' % path)
     with open(path, 'rb') as f:
         results = pickle.load(f)
     return avg_predictions(results)
     
 
-def parse_inputs(inputs):
+def parse_inputs(inputs, dirname=''):
     results = []
     for elem in inputs:
         if type(elem) is list:
-            result = parse_inputs(elem)
+            result = parse_inputs(elem, dirname)
         else:
-            result = read_prediction(elem)
+            result = read_prediction(elem, dirname)
         results.append(result)
     return avg_predictions(results)
 

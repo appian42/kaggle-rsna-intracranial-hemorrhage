@@ -14,6 +14,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--input')
     parser.add_argument('--output')
+    parser.add_argument('--brain-diff', type=float)
     return parser.parse_args()
 
 
@@ -50,9 +51,9 @@ def add_adjacent_labels(df):
         labels = list(group.labels)
         for j,id in enumerate(group.ID):
             if j == 0:
-                left = labels[j-1]
-            else:
                 left = ''
+            else:
+                left = labels[j-1]
             if j+1 == len(labels):
                 right = ''
             else:
@@ -75,8 +76,9 @@ def main():
 
     show_distribution(df)
 
-    df = df[df.custom_diff > 60]
-    print('removed records by custom_diff (%d records)' % len(df))
+    if args.brain_diff:
+        df = df[df.brain_diff > args.brain_diff]
+        print('excluded records by brain_diff (%d records now)' % len(df))
 
     df = parse_position(df)
 
@@ -85,13 +87,13 @@ def main():
     df['PositionOrd'] = df.groupby('SeriesInstanceUID')[['Position3']].rank() / df.groupby('SeriesInstanceUID')[['Position3']].transform('count')
 
     df = add_adjacent_labels(df)
-    df = df[['ID', 'labels', 'PatientID', 'WindowCenter', 'WindowWidth', 'RescaleIntercept', 'RescaleSlope', 'Position3', 'PositionOrd', 'LeftLabel', 'RightLabel']]
+    df = df[['ID', 'labels', 'PatientID', 'WindowCenter', 'WindowWidth', 'RescaleIntercept', 'RescaleSlope', 'Position3', 'PositionOrd', 'LeftLabel', 'RightLabel', 'BitsStored', 'PixelRepresentation', 'brain_ratio', 'brain_diff']]
+
+    show_distribution(df)
 
     df = df.sort_values('ID')
     with open(args.output, 'wb') as f:
         pickle.dump(df, f)
-
-    show_distribution(df)
 
     print('created dataset (%d records)' % len(df))
     print('saved to %s' % args.output)

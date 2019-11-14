@@ -84,7 +84,7 @@ def valid(cfg, model):
     assert cfg.output
     criterion = factory.get_loss(cfg)
     util.load_model(cfg.snapshot, model)
-    loader_valid = factory.get_dataloader(cfg.data.valid, [cfg.fold])
+    loader_valid = factory.get_dataloader(cfg.data.valid, [cfg.fold] if cfg.fold is not None else None)
     with torch.no_grad():
         results = [run_nn(cfg.data.valid, 'valid', model, loader_valid, criterion=criterion) for i in range(cfg.n_tta)]
     with open(cfg.output, 'wb') as f:
@@ -127,9 +127,11 @@ def train(cfg, model):
 
         log(f'\n----- epoch {epoch} -----')
 
-        util.set_seed(epoch)
+        #util.set_seed(epoch)
 
         run_nn(cfg.data.train, 'train', model, loader_train, criterion=criterion, optim=optim, apex=cfg.apex)
+
+        #util.set_seed(1000)
         with torch.no_grad():
             val = run_nn(cfg.data.valid, 'valid', model, loader_valid, criterion=criterion)
 
@@ -155,7 +157,7 @@ def run_nn(cfg, mode, model, loader, criterion=None, optim=None, scheduler=None,
     elif mode in ['valid', 'test']:
         model.eval()
     else:
-        raise 
+        raise RuntimeError('Unexpected mode %s' % mode)
 
     t1 = time.time()
     losses = []
@@ -221,7 +223,7 @@ def run_nn(cfg, mode, model, loader, criterion=None, optim=None, scheduler=None,
 def calc_logloss(targets, outputs, eps=1e-5):
     # for RSNA
     try:
-        logloss_classes = [log_loss(np.floor(targets[:,i]), np.clip(outputs[:,i], eps, 1-eps)) for i in range(6)]
+        logloss_classes = [log_loss(np.round(targets[:,i]), np.clip(outputs[:,i], eps, 1-eps)) for i in range(6)]
     except ValueError as e: 
         logloss_classes = [1, 1, 1, 1, 1, 1]
 
@@ -232,8 +234,8 @@ def calc_logloss(targets, outputs, eps=1e-5):
 
 
 def calc_auc(targets, outputs):
-    macro = roc_auc_score(np.floor(targets), outputs, average='macro')
-    micro = roc_auc_score(np.floor(targets), outputs, average='micro')
+    macro = roc_auc_score(np.round(targets), outputs, average='macro')
+    micro = roc_auc_score(np.round(targets), outputs, average='micro')
     return {
         'auc': (macro + micro) / 2,
         'auc_macro': macro,
@@ -244,8 +246,9 @@ def calc_auc(targets, outputs):
 
 if __name__ == '__main__':
 
-    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+    print('benchmark', torch.backends.cudnn.benchmark)
 
     try:
         main()

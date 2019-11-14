@@ -28,6 +28,7 @@ def _make_folds(df, n_fold, seed):
     counter_folds = collections.Counter()
 
     folds = {}
+    min_labels = {}
     random.seed(seed)
     groups = df.groupby('PatientID')
     print('making %d folds...' % n_fold)
