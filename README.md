@@ -1,7 +1,7 @@
 # RSNA Intracranial Hemorrhage Detection
 
 - This is the project for [RSNA Intracranial Hemorrhage Detection](https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection) hosted on Kaggle in 2019.
-- It finished at [12th place](https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection/leaderboard) in the competition.
+- It ended up at [11th place](https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection/leaderboard) in the competition.
 
 
 ## Table of Contents
@@ -17,7 +17,6 @@
     *   [Ensembling](#ensembling)
 *   [Download](#download)
     *   [Trained Weights](#trained-weights)
-    *   [Predictions](#predictions)
 *   [License](#license)
 
 
@@ -40,7 +39,9 @@ Missing directories will be created when `./bin/preprocess.sh` is run.
 
 ## Solution Overview
 
-Will be posted on kaggle forum.
+You can find it on kaggle forum.
+
+- https://www.kaggle.com/c/rsna-intracranial-hemorrhage-detection/discussion/117330
 
 
 ## How to run
@@ -121,13 +122,14 @@ $ sh ./bin/ensemble.sh
 
 ### Trained Weights
 
-TBA
+Due to kaggle dataset limit, model110 checkpoints are split into two parts.
+To use these checkpoints, please download them and unzip at `./model` directory. You can skip `Training` phase and start `Predicting` by using them.
 
-### Predictions
-
-TBA
+- model100 https://www.kaggle.com/appian/rsna-model100
+- model110 (part 1) https://www.kaggle.com/appian/rsna-model110-1
+- model110 (part 2) https://www.kaggle.com/appian/rsna-model110-2
 
 
 ## License
 
-The license is MIT. 
+The license is MIT.
