@@ -5,7 +5,7 @@ efficientnet-pytorch==0.5.1
 kaggle==1.5.6         
 lightgbm==2.2.2         
 matplotlib==3.0.2         
-numpy==1.15.4        
+numpy==1.22.0        
 opencv-python==4.1.1.26      
 pandas==0.23.4        
 Pillow==6.2.0         
