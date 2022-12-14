@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  jupyter-lab:
+    image: pytorch
+    init: true
+    build:
+      context: ./
+      dockerfile: jupyter.Dockerfile
+    env_file: ./.env
+    ports:
+      - 8888:8888
+    volumes:
+      - ${ROOT_DIR}:/code
+      - ${DATA_DIR}:/data
+    command:
+      [
+        "jupyter",
+        "lab",
+        "--allow-root",
+        "--notebook-dir=/code"
+      ]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu"]
