@@ -92,10 +92,26 @@ data = dict(
         dataset_policy=1,
         window_policy=window_policy,
     ),
-    test = dict(
+    test_RSNA = dict(
         dataset_type='CustomDataset',
         annotations='./cache/test.pkl',
         imgdir='./input/stage_2_test_images',
+        imgsize=imgsize,
+        loader=dict(
+            shuffle=False,
+            batch_size=batch_size,
+            drop_last=False,
+            num_workers=num_workers,
+            pin_memory=False,
+        ),
+        transforms=[crop_test, hflip, rotate_test, dicomnoise_test, totensor],
+        dataset_policy=1,
+        window_policy=window_policy,
+    ),
+    test = dict(
+        dataset_type='CustomDataset',
+        annotations='./cache/test.pkl',
+        imgdir='./input/test',
         imgsize=imgsize,
         loader=dict(
             shuffle=False,

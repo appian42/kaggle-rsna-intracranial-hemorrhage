@@ -24,15 +24,19 @@ def get_args():
     return parser.parse_args()
 
 
+# Modified for use with test_files.csv
 def group_labels_by_id(df):
     ids = {}
-    for row in tqdm(df.itertuples(), total=len(df)):
-        prefix, id, label = row.ID.split('_')
-        id = '%s_%s' % (prefix, id)
-        if id not in ids:
-            ids[id] = []
-        if row.Label == 1: 
-            ids[id].append(label)
+    if "Label" in df.columns:
+        for row in tqdm(df.itertuples(), total=len(df)):
+            prefix, id, label = row.ID.split('_')
+            id = '%s_%s' % (prefix, id)
+            if id not in ids:
+                ids[id] = []
+            if row.Label == 1: 
+                ids[id].append(label)
+    else:
+        ids = {id: [] for id in df.ID}
     return ids
 
 
