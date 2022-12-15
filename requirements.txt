@@ -20,5 +20,6 @@ pylibjpeg
 # sklearn==0.0           
 torch==1.1.0         
 torchvision==0.3.0         
-tqdm==4.28.1        
+# tqdm==4.28.1 
+tqdm       
 # xgboost==0.80          

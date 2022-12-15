@@ -68,7 +68,7 @@ def main():
     elif cfg.mode == 'test':
         test(cfg, model)
 
-
+# Note: Config for model100 modified to work with non-RSNA test data, will need to update if ever using RSNA test data
 def test(cfg, model):
     assert cfg.output
     util.load_model(cfg.snapshot, model)
