@@ -2,6 +2,7 @@ import sys
 import os
 import argparse
 import pickle
+from collections import defaultdict
 
 import pandas as pd
 import numpy as np
@@ -59,10 +60,16 @@ def main():
     else:
         result = parse_inputs(eval(args.inputs))
 
-    result.rename(columns={label: mappings.num_to_label[i] for i, label in enumerate(result.columns[1:])}, inplace=True)
+    preds = defaultdict(list)
+    for ID, outputs in zip(result['ids'], result['outputs']):
+        preds["ID"].append(ID)
+        for i, output in enumerate(outputs):
+            label = mappings.num_to_label[i]
+            preds[label].append(output)
 
-    result.to_csv(args.output, index=False)
-    print(result.tail())
+    preds_df = pd.DataFrame.from_dict(preds) 
+    preds_df.to_csv(args.output, index=False)
+    print(preds_df.tail())
     print('saved to %s' % args.output)
 
 
