@@ -1,11 +1,12 @@
 version: "3.8"
 services:
   jupyter-lab:
-    image: pytorch
+    image: pytorch-1.1.0
     init: true
     build:
       context: ./
       dockerfile: Dockerfile
+    shm_size: '8gb'
     env_file: ./.env
     ports:
       - 8888:8888
