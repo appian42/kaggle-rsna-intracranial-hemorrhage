@@ -12,3 +12,5 @@ catboost_info/
 *.py[cod]
 
 misc.ipynb
+
+.Trash-0/
